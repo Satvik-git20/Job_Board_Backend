@@ -2,13 +2,17 @@ import os
 from datetime import timedelta
 from pathlib import Path
 from decouple import config
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-jobboard-platform-2026')
-DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
+# Fail fast on missing configuration instead of shipping insecure defaults.
+SECRET_KEY = config('SECRET_KEY')
+if not SECRET_KEY or 'insecure' in SECRET_KEY.lower():
+    raise ImproperlyConfigured('SECRET_KEY must be set via environment/decouple config.')
+DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -144,7 +148,7 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': config('JWT_SECRET_KEY', default=SECRET_KEY),
+    'SIGNING_KEY': config('JWT_SECRET_KEY'),
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
